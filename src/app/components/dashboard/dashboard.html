@@ -1,0 +1,842 @@
+<div class="dashboard-wrapper" [class.sidebar-toggled]="sidebarCollapsed()">
+
+  <!-- TOAST NOTIFICATION -->
+  <div *ngIf="toastMessage()" class="custom-toast alert alert-primary shadow-lg fade show" role="alert">
+    <i class="fas fa-check-circle mr-2 text-primary"></i>
+    <span>{{ toastMessage() }}</span>
+  </div>
+
+  <!-- SIDEBAR NAVIGATION -->
+  <aside class="dashboard-sidebar">
+    <div class="sidebar-header d-flex align-items-center justify-content-between">
+      <div class="brand-logo d-flex align-items-center">
+        <div class="brand-icon mr-2">
+          <i class="fas fa-calendar-check text-white"></i>
+        </div>
+        <div class="brand-text">
+          <h5 class="mb-0 text-white font-weight-bold">OAP<span class="text-sky"> SISTEMAS</span></h5>
+          <small class="text-blue-light text-uppercase">AREA DE SISTEMAS</small>
+        </div>
+      </div>
+      <button class="btn btn-link text-white-50 d-lg-none p-0" (click)="toggleSidebar()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="sidebar-menu">
+      <div class="menu-label">PRINCIPAL</div>
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="activeTab() === 'dashboard'" (click)="activeTab.set('dashboard')">
+            <i class="fas fa-th-large mr-3"></i>
+            <span>Dashboard</span>
+            <span class="badge badge-primary badge-pill ml-auto">Nuevo</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="activeTab() === 'contactos'" (click)="activeTab.set('contactos')">
+            <i class="fas fa-address-book mr-3"></i>
+            <span>Contactos</span>
+            <span class="badge badge-light-blue ml-auto">{{ contacts().length }}</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="activeTab() === 'citas'" (click)="activeTab.set('citas')">
+            <i class="fas fa-calendar-alt mr-3"></i>
+            <span>Agenda & Citas</span>
+            <span class="badge badge-info badge-pill ml-auto">4 hoy</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="activeTab() === 'tareas'" (click)="activeTab.set('tareas')">
+            <i class="fas fa-tasks mr-3"></i>
+            <span>Tareas & Pendientes</span>
+            <span class="badge badge-warning badge-pill ml-auto">{{ tasks().length }}</span>
+          </a>
+        </li>
+      </ul>
+
+      <div class="menu-label mt-4">GESTIÓN & REPORTES</div>
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="activeTab() === 'reportes'" (click)="activeTab.set('reportes')">
+            <i class="fas fa-chart-pie mr-3"></i>
+            <span>Reportes y Métricas</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="javascript:void(0)">
+            <i class="fas fa-tags mr-3"></i>
+            <span>Grupos y Etiquetas</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="javascript:void(0)">
+            <i class="fas fa-cloud-upload-alt mr-3"></i>
+            <span>Sincronización Cloud</span>
+          </a>
+        </li>
+      </ul>
+
+      <div class="menu-label mt-4">SISTEMA</div>
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link" href="javascript:void(0)">
+            <i class="fas fa-cog mr-3"></i>
+            <span>Configuración</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="javascript:void(0)">
+            <i class="fas fa-shield-alt mr-3"></i>
+            <span>Seguridad & Roles</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Sidebar Footer / User Profile Card -->
+    <div class="sidebar-user-card p-3 mx-3 mb-3 rounded">
+      <div class="d-flex align-items-center">
+        <div class="position-relative">
+          <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80"
+            alt="Avatar" class="avatar-sm rounded-circle border border-white">
+          <span class="user-status-dot"></span>
+        </div>
+        <div class="ml-2 user-meta text-truncate">
+          <h6 class="mb-0 text-white font-weight-bold text-truncate">Carlos Mendoza</h6>
+          <small class="text-blue-light">Super Admin</small>
+        </div>
+        <button class="btn btn-sm btn-link text-white-50 ml-auto p-0" title="Cerrar sesión">
+          <i class="fas fa-sign-out-alt"></i>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="dashboard-main">
+
+    <!-- TOP NAVBAR -->
+    <header class="dashboard-topbar d-flex align-items-center justify-content-between px-4 py-3 bg-white border-bottom">
+      <div class="d-flex align-items-center">
+        <button class="btn btn-outline-primary btn-sm rounded-circle mr-3" (click)="toggleSidebar()"
+          title="Alternar Menú">
+          <i class="fas fa-bars"></i>
+        </button>
+
+        <!-- Search bar -->
+        <div class="input-group search-input-group d-none d-md-flex">
+          <div class="input-group-prepend">
+            <span class="input-group-text bg-light border-right-0 rounded-left">
+              <i class="fas fa-search text-muted"></i>
+            </span>
+          </div>
+          <input type="text" class="form-control bg-light border-left-0 rounded-right"
+            placeholder="Buscar contactos, reuniones, tareas..." [ngModel]="searchTerm()"
+            (ngModelChange)="searchTerm.set($event)">
+          <button *ngIf="searchTerm()" class="btn btn-sm btn-link clear-search-btn" (click)="searchTerm.set('')">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Right Header Actions -->
+      <div class="d-flex align-items-center">
+        <!-- Quick Action Buttons -->
+        <div class="mr-3 d-none d-sm-flex">
+          <button class="btn btn-primary btn-sm px-3 shadow-sm mr-2" (click)="openContactModal()">
+            <i class="fas fa-user-plus mr-1"></i> Nuevo Contacto
+          </button>
+          <button class="btn btn-outline-primary btn-sm px-3 shadow-sm" (click)="openAppointmentModal()">
+            <i class="fas fa-plus-circle mr-1"></i> Nueva Cita
+          </button>
+        </div>
+
+        <!-- Date Badge -->
+        <div
+          class="d-none d-xl-flex align-items-center bg-light-blue px-3 py-1 rounded mr-3 text-primary font-weight-500">
+          <i class="far fa-calendar-alt mr-2"></i>
+          <span class="text-capitalize small">{{ currentDate }}</span>
+        </div>
+
+        <!-- Notifications Dropdown -->
+        <div class="position-relative mr-3">
+          <button class="btn btn-light rounded-circle notification-bell-btn" (click)="toggleNotifications()">
+            <i class="far fa-bell text-secondary"></i>
+            <span *ngIf="unreadCount() > 0" class="badge-dot"></span>
+          </button>
+
+          <!-- Dropdown Menu -->
+          <div *ngIf="notificationsOpen()" class="custom-dropdown notification-dropdown shadow-lg bg-white rounded">
+            <div class="dropdown-header d-flex justify-content-between align-items-center p-3 border-bottom bg-light">
+              <h6 class="mb-0 font-weight-bold text-dark">Notificaciones</h6>
+              <span class="badge badge-primary badge-pill">{{ unreadCount() }} nuevas</span>
+            </div>
+            <div class="notification-list">
+              <div *ngFor="let item of notifications()" class="notification-item p-3 border-bottom d-flex"
+                [class.bg-light-blue-subtle]="!item.read">
+                <div class="notification-icon mr-3">
+                  <span class="badge {{ item.badgeClass }} p-2 rounded-circle">
+                    <i class="fas {{ item.icon }}"></i>
+                  </span>
+                </div>
+                <div class="notification-content flex-grow-1">
+                  <p class="mb-0 font-weight-600 text-dark small">{{ item.title }}</p>
+                  <p class="mb-0 text-muted small">{{ item.detail }}</p>
+                  <small class="text-primary font-weight-500">{{ item.time }}</small>
+                </div>
+              </div>
+            </div>
+            <div class="p-2 text-center bg-light">
+              <button class="btn btn-sm btn-link text-primary font-weight-bold" (click)="markAllNotificationsRead()">
+                Marcar todas como leídas
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Menu Dropdown -->
+        <div class="position-relative">
+          <div class="user-pill d-flex align-items-center p-1 rounded cursor-pointer" (click)="toggleUserMenu()">
+            <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80"
+              alt="Avatar" class="avatar-sm rounded-circle mr-2">
+            <div class="d-none d-md-block text-left mr-2">
+              <span class="d-block font-weight-bold text-dark small line-height-1">Carlos M.</span>
+              <small class="text-muted">Administrador</small>
+            </div>
+            <i class="fas fa-chevron-down text-muted small"></i>
+          </div>
+
+          <!-- User dropdown -->
+          <div *ngIf="userMenuOpen()" class="custom-dropdown user-dropdown shadow-lg bg-white rounded p-2">
+            <div class="px-3 py-2 border-bottom">
+              <p class="mb-0 font-weight-bold text-dark">Carlos Mendoza</p>
+              <small class="text-muted">carlos.mendoza&#64;agendapro.com</small>
+            </div>
+            <a class="dropdown-item py-2" href="javascript:void(0)"><i class="far fa-user mr-2 text-primary"></i> Mi
+              Perfil</a>
+            <a class="dropdown-item py-2" href="javascript:void(0)"><i class="fas fa-cog mr-2 text-primary"></i>
+              Ajustes</a>
+            <a class="dropdown-item py-2" href="javascript:void(0)"><i
+                class="fas fa-question-circle mr-2 text-primary"></i> Soporte</a>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item py-2 text-danger" href="javascript:void(0)"><i class="fas fa-sign-out-alt mr-2"></i>
+              Cerrar Sesión</a>
+          </div>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- CONTENT BODY -->
+    <div class="dashboard-content-body p-4">
+
+      <!-- HERO WELCOME BANNER (BLUE GRADIENT) -->
+      <section class="welcome-banner mb-4 p-4 rounded-xl shadow-sm text-white position-relative overflow-hidden">
+        <div class="row align-items-center position-relative z-1">
+          <div class="col-lg-8">
+            <div class="d-flex align-items-center mb-2">
+              <span
+                class="badge badge-light text-primary font-weight-bold px-3 py-1 mr-2 text-uppercase letter-spacing">
+                <i class="fas fa-sparkles mr-1"></i> Panel de Control
+              </span>
+              <span class="text-white-50 small">Versión 4.2 Pro</span>
+            </div>
+            <h2 class="font-weight-bold text-white mb-2">¡Hola de nuevo, Carlos! 👋</h2>
+            <p class="lead-text mb-3 text-blue-light">
+              Tienes <strong class="text-white">4 citas agendadas</strong> para hoy y <strong class="text-white">3
+                tareas pendientes</strong> que requieren tu atención.
+            </p>
+            <div class="d-flex flex-wrap gap-2 pt-1">
+              <button class="btn btn-light text-primary font-weight-bold shadow-sm mr-2 mb-2"
+                (click)="activeTab.set('citas')">
+                <i class="fas fa-calendar-day mr-1"></i> Ver Agenda de Hoy
+              </button>
+              <button class="btn btn-outline-light font-weight-500 mb-2 mr-2" (click)="openContactModal()">
+                <i class="fas fa-user-plus mr-1"></i> Añadir Contacto
+              </button>
+              <button class="btn btn-outline-light font-weight-500 mb-2"
+                (click)="showToast('Reporte PDF generado exitosamente')">
+                <i class="fas fa-file-download mr-1"></i> Exportar Resumen
+              </button>
+              <input type="file" (change)="onFileSelected($event)" accept=".csv"
+                class="btn btn-outline-light font-weight-500 mb-2">
+              Exportar Resumen
+
+
+
+            </div>
+          </div>
+          <div class="col-lg-4 d-none d-lg-flex justify-content-end">
+            <div class="hero-stats-pill text-center bg-white-glass p-3 rounded-lg border border-white-20">
+              <div class="text-uppercase text-sky font-weight-bold small mb-1">Estado del Sistema</div>
+              <div class="h3 font-weight-bold text-white mb-1">100% ACTIVO</div>
+              <div class="d-flex align-items-center justify-content-center text-white-75 small">
+                <span class="status-pulse mr-2"></span> Sincronizado en tiempo real
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Decorative subtle background shapes -->
+        <div class="banner-circle circle-1"></div>
+        <div class="banner-circle circle-2"></div>
+      </section>
+
+      <!-- KPI METRICS ROW -->
+      <section class="metrics-section mb-4">
+        <div class="row">
+          <div *ngFor="let m of metrics" class="col-xl-3 col-md-6 col-12 mb-3 mb-xl-0">
+            <div class="card metric-card border-0 shadow-sm rounded-lg h-100 overflow-hidden">
+              <div class="card-body p-4 d-flex flex-column justify-content-between position-relative">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                  <div>
+                    <span class="metric-title text-muted text-uppercase small font-weight-bold">{{ m.title }}</span>
+                    <h3 class="metric-value font-weight-bold mb-0 text-navy mt-1">{{ m.value }}</h3>
+                  </div>
+                  <div class="metric-icon-box {{ m.gradientClass }} text-white rounded-circle shadow-sm">
+                    <i class="fas {{ m.icon }}"></i>
+                  </div>
+                </div>
+
+                <div class="metric-footer pt-2">
+                  <div class="d-flex align-items-center justify-content-between small mb-2">
+                    <span [ngClass]="m.isPositive ? 'text-success font-weight-bold' : 'text-danger font-weight-bold'">
+                      <i class="fas" [ngClass]="m.isPositive ? 'fa-arrow-up' : 'fa-info-circle'"></i> {{ m.change }}
+                    </span>
+                    <span class="text-muted">{{ m.subtext }}</span>
+                  </div>
+                  <div class="progress progress-sm rounded-pill">
+                    <div class="progress-bar {{ m.gradientClass }}" role="progressbar" [style.width.%]="m.progress">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MAIN TWO-COLUMN DASHBOARD GRID -->
+      <div class="row">
+
+        <!-- LEFT COLUMN (8 Cols on LG) -->
+        <div class="col-xl-8 col-lg-12 mb-4">
+
+          <!-- ACTIVITY CHART WIDGET -->
+          <div class="card border-0 shadow-sm rounded-lg mb-4">
+            <div
+              class="card-header bg-white border-0 pt-4 px-4 pb-0 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center">
+              <div>
+                <h5 class="font-weight-bold text-navy mb-1">Rendimiento Semanal de Actividades</h5>
+                <p class="text-muted small mb-0">Comparativa de citas realizadas vs. contactos atendidos</p>
+              </div>
+              <div class="btn-group btn-group-sm mt-2 mt-sm-0 p-1 bg-light rounded-pill">
+                <button class="btn rounded-pill px-3" [class.btn-primary]="chartTimeframe() === 'semanal'"
+                  [class.btn-light]="chartTimeframe() !== 'semanal'" (click)="chartTimeframe.set('semanal')">
+                  Semanal
+                </button>
+                <button class="btn rounded-pill px-3" [class.btn-primary]="chartTimeframe() === 'mensual'"
+                  [class.btn-light]="chartTimeframe() !== 'mensual'" (click)="chartTimeframe.set('mensual')">
+                  Mensual
+                </button>
+              </div>
+            </div>
+
+            <div class="card-body px-4 pt-3 pb-4">
+              <!-- Legend & Summary -->
+              <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 pb-2 border-bottom">
+                <div class="d-flex align-items-center gap-4">
+                  <div class="d-flex align-items-center mr-3">
+                    <span class="chart-legend-bullet bg-royal mr-2"></span>
+                    <span class="small font-weight-500 text-dark">Citas Programadas (51)</span>
+                  </div>
+                  <div class="d-flex align-items-center">
+                    <span class="chart-legend-bullet bg-sky mr-2"></span>
+                    <span class="small font-weight-500 text-dark">Nuevos Contactos (91)</span>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span class="badge badge-success-light text-success font-weight-bold px-2 py-1">
+                    <i class="fas fa-arrow-trend-up mr-1"></i> +18.5% Eficiencia
+                  </span>
+                </div>
+              </div>
+
+              <!-- Bar Chart Visual Representation -->
+              <div class="chart-bars-container d-flex justify-content-between align-items-end pt-3 pb-2">
+                <div *ngFor="let item of weeklyStats" class="chart-bar-group text-center flex-grow-1">
+                  <div class="bar-pair d-flex justify-content-center align-items-end mx-auto">
+                    <!-- Citas Bar -->
+                    <div class="bar-item bar-citas mr-1" [style.height.%]="item.citasHeight"
+                      [title]="item.citas + ' Citas el ' + item.day">
+                      <span class="bar-tooltip">{{ item.citas }}</span>
+                    </div>
+                    <!-- Contactos Bar -->
+                    <div class="bar-item bar-contactos ml-1" [style.height.%]="item.contactosHeight"
+                      [title]="item.contactos + ' Contactos el ' + item.day">
+                      <span class="bar-tooltip">{{ item.contactos }}</span>
+                    </div>
+                  </div>
+                  <span class="bar-label d-block text-muted small mt-2 font-weight-bold">{{ item.day }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DIRECTORY & CONTACTS DATA TABLE -->
+          <div class="card border-0 shadow-sm rounded-lg">
+            <div class="card-header bg-white border-0 pt-4 px-4 pb-3">
+              <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                <div>
+                  <h5 class="font-weight-bold text-navy mb-1">Directorio de Contactos Recientes</h5>
+                  <p class="text-muted small mb-0">Gestiona y contacta rápidamente a clientes y colaboradores</p>
+                </div>
+                <div class="d-flex mt-3 mt-md-0">
+                  <button class="btn btn-primary btn-sm px-3 rounded-pill shadow-sm" (click)="openContactModal()">
+                    <i class="fas fa-plus mr-1"></i> Agregar
+                  </button>
+                </div>
+              </div>
+
+              <!-- Category Pills Filter -->
+              <div class="category-filters d-flex flex-wrap mt-3 gap-2">
+                <button *ngFor="let cat of ['Todos', 'VIP', 'Cliente', 'Equipo', 'Proveedor']"
+                  class="btn btn-sm filter-pill mr-2 mb-2" [class.filter-pill-active]="selectedCategory() === cat"
+                  (click)="setCategory(cat)">
+                  {{ cat }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Table Responsive -->
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0 custom-dashboard-table">
+                <thead class="thead-light">
+                  <tr>
+                    <th class="border-0 px-4">Contacto / Persona</th>
+                    <th class="border-0">Empresa & Cargo</th>
+                    <th class="border-0">Canal Directo</th>
+                    <th class="border-0">Categoría</th>
+                    <th class="border-0">Estado</th>
+                    <th class="border-0 text-right px-4">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let contact of filteredContacts()">
+                    <td class="px-4">
+                      <div class="d-flex align-items-center">
+                        <img [src]="contact.avatar" alt="Avatar" class="avatar-table rounded-circle mr-3 shadow-xs">
+                        <div>
+                          <span class="font-weight-bold text-navy d-block">{{ contact.name }}</span>
+                          <small class="text-muted">{{ contact.email }}</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="d-block font-weight-500 text-dark">{{ contact.company }}</span>
+                      <small class="text-muted">{{ contact.role }}</small>
+                    </td>
+                    <td>
+                      <span class="d-block text-dark small font-weight-500">{{ contact.phone }}</span>
+                      <small class="text-muted"><i class="far fa-clock mr-1"></i>{{ contact.lastContact }}</small>
+                    </td>
+                    <td>
+                      <span class="badge" [ngClass]="{
+                        'badge-vip': contact.category === 'VIP',
+                        'badge-client': contact.category === 'Cliente',
+                        'badge-team': contact.category === 'Equipo',
+                        'badge-provider': contact.category === 'Proveedor'
+                      }">
+                        {{ contact.category }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge-status-pill" [class.badge-status-active]="contact.status === 'Activo'"
+                        [class.badge-status-pending]="contact.status === 'Pendiente'">
+                        <span class="status-indicator"></span> {{ contact.status }}
+                      </span>
+                    </td>
+                    <td class="text-right px-4">
+                      <div class="btn-group btn-group-sm">
+                        <button class="btn btn-light text-primary btn-action" title="Llamar"
+                          (click)="showToast('Iniciando llamada a ' + contact.name)">
+                          <i class="fas fa-phone-alt"></i>
+                        </button>
+                        <button class="btn btn-light text-info btn-action" title="Enviar Email"
+                          (click)="showToast('Abriendo cliente de correo para ' + contact.email)">
+                          <i class="far fa-envelope"></i>
+                        </button>
+                        <button class="btn btn-light text-danger btn-action" title="Eliminar"
+                          (click)="deleteContact(contact.id)">
+                          <i class="far fa-trash-alt"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <!-- Empty state when no contacts found -->
+                  <tr *ngIf="filteredContacts().length === 0">
+                    <td colspan="6" class="text-center py-5">
+                      <div class="empty-state">
+                        <i class="fas fa-search fa-3x text-muted mb-3 opacity-50"></i>
+                        <h6 class="font-weight-bold text-navy">No se encontraron contactos</h6>
+                        <p class="text-muted small">Intenta buscar con otros términos o cambia la categoría
+                          seleccionada.</p>
+                        <button class="btn btn-outline-primary btn-sm"
+                          (click)="searchTerm.set(''); selectedCategory.set('Todos')">
+                          Restablecer Filtros
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Table Footer Pagination -->
+            <div
+              class="card-footer bg-white border-0 px-4 py-3 d-flex flex-column flex-sm-row justify-content-between align-items-center">
+              <small class="text-muted mb-2 mb-sm-0">
+                Mostrando <strong>{{ filteredContacts().length }}</strong> de <strong>{{ contacts().length }}</strong>
+                contactos registrados
+              </small>
+              <nav aria-label="Navegación de páginas">
+                <ul class="pagination pagination-sm mb-0">
+                  <li class="page-item disabled"><a class="page-link" href="javascript:void(0)"><i
+                        class="fas fa-chevron-left"></i></a></li>
+                  <li class="page-item active"><a class="page-link" href="javascript:void(0)">1</a></li>
+                  <li class="page-item"><a class="page-link" href="javascript:void(0)">2</a></li>
+                  <li class="page-item"><a class="page-link" href="javascript:void(0)">3</a></li>
+                  <li class="page-item"><a class="page-link" href="javascript:void(0)"><i
+                        class="fas fa-chevron-right"></i></a></li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN (4 Cols on LG) -->
+        <div class="col-xl-4 col-lg-12">
+
+          <!-- TODAY'S SCHEDULE TIMELINE WIDGET -->
+          <div class="card border-0 shadow-sm rounded-lg mb-4">
+            <div class="card-header bg-white border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+              <div>
+                <h5 class="font-weight-bold text-navy mb-1">Agenda del Día</h5>
+                <p class="text-muted small mb-0">Próximos compromisos programados</p>
+              </div>
+              <button class="btn btn-outline-primary btn-sm rounded-circle" (click)="openAppointmentModal()"
+                title="Añadir Cita">
+                <i class="fas fa-plus"></i>
+              </button>
+            </div>
+
+            <div class="card-body px-4 py-3">
+              <div class="timeline-container position-relative">
+                <div *ngFor="let apt of appointments()" class="timeline-item pb-3 position-relative">
+                  <div class="timeline-badge" [ngClass]="{
+                    'bg-primary': apt.status === 'En curso',
+                    'bg-info': apt.status === 'Confirmada',
+                    'bg-secondary': apt.status === 'Pendiente'
+                  }"></div>
+                  <div class="timeline-card p-3 rounded bg-light-blue-subtle border-left-blue">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                      <span class="timeline-time font-weight-bold text-primary small">
+                        <i class="far fa-clock mr-1"></i> {{ apt.time }}
+                      </span>
+                      <span class="badge" [ngClass]="{
+                        'badge-primary': apt.status === 'En curso',
+                        'badge-info': apt.status === 'Confirmada',
+                        'badge-warning': apt.status === 'Pendiente'
+                      }">
+                        {{ apt.status }}
+                      </span>
+                    </div>
+                    <h6 class="font-weight-bold text-navy mb-1">{{ apt.title }}</h6>
+                    <div class="d-flex align-items-center justify-content-between mt-2">
+                      <div class="d-flex align-items-center">
+                        <img [src]="apt.contactAvatar" alt="Avatar" class="avatar-xs rounded-circle mr-2">
+                        <small class="font-weight-500 text-dark">{{ apt.contactName }}</small>
+                      </div>
+                      <small class="text-muted font-weight-500">
+                        <i class="fas" [ngClass]="{
+                          'fa-video text-primary': apt.type === 'Videollamada',
+                          'fa-map-marker-alt text-danger': apt.type === 'Presencial',
+                          'fa-phone text-success': apt.type === 'Llamada'
+                        }"></i> {{ apt.location }}
+                      </small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-footer bg-white border-0 text-center pb-4 pt-1">
+              <button class="btn btn-outline-primary btn-sm btn-block rounded-pill"
+                (click)="showToast('Sincronizando con Google Calendar...')">
+                <i class="fab fa-google mr-2"></i> Sincronizar Calendario
+              </button>
+            </div>
+          </div>
+
+          <!-- QUICK TASKS / PENDIENTES WIDGET -->
+          <div class="card border-0 shadow-sm rounded-lg mb-4">
+            <div class="card-header bg-white border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+              <div>
+                <h5 class="font-weight-bold text-navy mb-1">Tareas Prioritarias</h5>
+                <p class="text-muted small mb-0">{{ tasks().length }} pendientes de ejecución</p>
+              </div>
+              <span class="badge badge-primary badge-pill font-weight-bold">Hoy</span>
+            </div>
+
+            <div class="card-body px-4 py-3">
+              <!-- Quick Task Input -->
+              <div class="input-group input-group-sm mb-3">
+                <input type="text" class="form-control rounded-left" placeholder="Agregar nueva tarea rápida..."
+                  [ngModel]="newTaskInput()" (ngModelChange)="newTaskInput.set($event)" (keyup.enter)="addTask()">
+                <div class="input-group-append">
+                  <button class="btn btn-primary rounded-right" (click)="addTask()">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Task List -->
+              <div class="task-list">
+                <div *ngFor="let t of tasks()"
+                  class="task-item d-flex align-items-center justify-content-between p-2 mb-2 rounded"
+                  [class.task-completed]="t.completed">
+                  <div class="custom-control custom-checkbox d-flex align-items-center flex-grow-1">
+                    <input type="checkbox" class="custom-control-input" [id]="'task-' + t.id" [checked]="t.completed"
+                      (change)="toggleTask(t.id)">
+                    <label class="custom-control-label ml-2 cursor-pointer font-weight-500 text-dark small"
+                      [for]="'task-' + t.id">
+                      <span class="task-title" [class.text-decoration-line-through]="t.completed">{{ t.title }}</span>
+                    </label>
+                  </div>
+                  <div class="d-flex align-items-center ml-2">
+                    <span class="badge mr-2" [ngClass]="{
+                      'badge-danger-soft': t.priority === 'Alta',
+                      'badge-warning-soft': t.priority === 'Media',
+                      'badge-info-soft': t.priority === 'Baja'
+                    }">
+                      {{ t.priority }}
+                    </span>
+                    <button class="btn btn-sm btn-link text-muted p-0" (click)="deleteTask(t.id)"
+                      title="Eliminar tarea">
+                      <i class="far fa-trash-alt small"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- QUICK SYSTEM SHORTCUTS -->
+          <div class="card border-0 shadow-sm rounded-lg bg-navy text-white p-4">
+            <h6 class="font-weight-bold text-white mb-3">Accesos Directos del Sistema</h6>
+            <div class="row g-2">
+              <div class="col-6 mb-2">
+                <button class="btn btn-dark-blue btn-block text-left p-3 rounded"
+                  (click)="showToast('Abriendo importador de contactos...')">
+                  <i class="fas fa-file-import text-sky fa-lg mb-2 d-block"></i>
+                  <span class="d-block font-weight-bold small text-white">Importar CSV</span>
+                  <small class="text-white-50">Carga masiva</small>
+                </button>
+              </div>
+              <div class="col-6 mb-2">
+                <button class="btn btn-dark-blue btn-block text-left p-3 rounded"
+                  (click)="showToast('Enviando recordatorios vía WhatsApp...')">
+                  <i class="fab fa-whatsapp text-success fa-lg mb-2 d-block"></i>
+                  <span class="d-block font-weight-bold small text-white">Recordatorios</span>
+                  <small class="text-white-50">Mensajes masivos</small>
+                </button>
+              </div>
+              <div class="col-6">
+                <button class="btn btn-dark-blue btn-block text-left p-3 rounded"
+                  (click)="showToast('Iniciando respaldo en la nube...')">
+                  <i class="fas fa-cloud-download-alt text-info fa-lg mb-2 d-block"></i>
+                  <span class="d-block font-weight-bold small text-white">Backup Cloud</span>
+                  <small class="text-white-50">Último: Hoy</small>
+                </button>
+              </div>
+              <div class="col-6">
+                <button class="btn btn-dark-blue btn-block text-left p-3 rounded"
+                  (click)="showToast('Abriendo configuraciones de seguridad...')">
+                  <i class="fas fa-user-shield text-warning fa-lg mb-2 d-block"></i>
+                  <span class="d-block font-weight-bold small text-white">Permisos</span>
+                  <small class="text-white-50">Control de acceso</small>
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- DASHBOARD FOOTER -->
+    <footer
+      class="dashboard-footer bg-white border-top px-4 py-3 d-flex flex-column flex-sm-row justify-content-between align-items-center text-muted small">
+      <div>
+        © 2026 <strong>AgendaPro Suite</strong>. Todos los derechos reservados.
+      </div>
+      <div class="mt-2 mt-sm-0">
+        <a href="javascript:void(0)" class="text-muted mr-3">Términos</a>
+        <a href="javascript:void(0)" class="text-muted mr-3">Privacidad</a>
+        <a href="javascript:void(0)" class="text-primary font-weight-bold">Centro de Ayuda</a>
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- MODAL: NUEVO CONTACTO -->
+  <div *ngIf="showContactModal()" class="custom-modal-backdrop d-flex align-items-center justify-content-center">
+    <div class="custom-modal bg-white rounded-lg shadow-lg">
+      <div class="modal-header bg-navy text-white px-4 py-3 rounded-top">
+        <div class="d-flex align-items-center">
+          <div class="modal-header-icon bg-royal text-white rounded-circle p-2 mr-3">
+            <i class="fas fa-user-plus"></i>
+          </div>
+          <div>
+            <h5 class="modal-title font-weight-bold text-white mb-0">Agregar Nuevo Contacto</h5>
+            <small class="text-blue-light">Registra información clave del cliente o colaborador</small>
+          </div>
+        </div>
+        <button type="button" class="close text-white" (click)="closeContactModal()">
+          <span>&times;</span>
+        </button>
+      </div>
+
+      <div class="modal-body p-4">
+        <form (ngSubmit)="saveContact()">
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label class="font-weight-bold small text-navy">Nombre Completo *</label>
+              <input type="text" class="form-control" placeholder="Ej: Dr. Roberto Gómez" [(ngModel)]="newContact.name"
+                name="name" required>
+            </div>
+            <div class="form-group col-md-6">
+              <label class="font-weight-bold small text-navy">Correo Electrónico *</label>
+              <input type="email" class="form-control" placeholder="ejemplo@correo.com" [(ngModel)]="newContact.email"
+                name="email" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label class="font-weight-bold small text-navy">Teléfono / WhatsApp</label>
+              <input type="text" class="form-control" placeholder="+34 600 000 000" [(ngModel)]="newContact.phone"
+                name="phone">
+            </div>
+            <div class="form-group col-md-6">
+              <label class="font-weight-bold small text-navy">Categoría</label>
+              <select class="form-control" [(ngModel)]="newContact.category" name="category">
+                <option value="VIP">VIP</option>
+                <option value="Cliente">Cliente</option>
+                <option value="Equipo">Equipo</option>
+                <option value="Proveedor">Proveedor</option>
+                <option value="Personal">Personal</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label class="font-weight-bold small text-navy">Empresa u Organización</label>
+              <input type="text" class="form-control" placeholder="Ej: Global Corp" [(ngModel)]="newContact.company"
+                name="company">
+            </div>
+            <div class="form-group col-md-6">
+              <label class="font-weight-bold small text-navy">Cargo / Rol</label>
+              <input type="text" class="form-control" placeholder="Ej: Director Comercial" [(ngModel)]="newContact.role"
+                name="role">
+            </div>
+          </div>
+
+          <div class="modal-footer px-0 pb-0 pt-3 border-top mt-3">
+            <button type="button" class="btn btn-light" (click)="closeContactModal()">Cancelar</button>
+            <button type="submit" class="btn btn-primary px-4 shadow-sm">
+              <i class="fas fa-save mr-1"></i> Guardar Contacto
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: NUEVA CITA / REUNIÓN -->
+  <div *ngIf="showAppointmentModal()" class="custom-modal-backdrop d-flex align-items-center justify-content-center">
+    <div class="custom-modal bg-white rounded-lg shadow-lg">
+      <div class="modal-header bg-navy text-white px-4 py-3 rounded-top">
+        <div class="d-flex align-items-center">
+          <div class="modal-header-icon bg-sky text-white rounded-circle p-2 mr-3">
+            <i class="fas fa-calendar-plus"></i>
+          </div>
+          <div>
+            <h5 class="modal-title font-weight-bold text-white mb-0">Programar Nueva Cita</h5>
+            <small class="text-blue-light">Agrega un evento a tu calendario de trabajo</small>
+          </div>
+        </div>
+        <button type="button" class="close text-white" (click)="closeAppointmentModal()">
+          <span>&times;</span>
+        </button>
+      </div>
+
+      <div class="modal-body p-4">
+        <form (ngSubmit)="saveAppointment()">
+          <div class="form-group">
+            <label class="font-weight-bold small text-navy">Título de la Cita / Evento *</label>
+            <input type="text" class="form-control" placeholder="Ej: Presentación de Propuesta Comercial"
+              [(ngModel)]="newAppointment.title" name="title" required>
+          </div>
+
+          <div class="form-group">
+            <label class="font-weight-bold small text-navy">Contacto o Participante *</label>
+            <input type="text" class="form-control" placeholder="Nombre de la persona o entidad"
+              [(ngModel)]="newAppointment.contactName" name="contactName" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label class="font-weight-bold small text-navy">Fecha</label>
+              <input type="date" class="form-control" [(ngModel)]="newAppointment.date" name="date">
+            </div>
+            <div class="form-group col-md-6">
+              <label class="font-weight-bold small text-navy">Hora</label>
+              <input type="time" class="form-control" [(ngModel)]="newAppointment.time" name="time">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label class="font-weight-bold small text-navy">Tipo de Encuentro</label>
+              <select class="form-control" [(ngModel)]="newAppointment.type" name="type">
+                <option value="Videollamada">Videollamada</option>
+                <option value="Presencial">Presencial</option>
+                <option value="Llamada">Llamada Telefónica</option>
+              </select>
+            </div>
+            <div class="form-group col-md-6">
+              <label class="font-weight-bold small text-navy">Lugar / Plataforma</label>
+              <input type="text" class="form-control" placeholder="Ej: Google Meet, Sala 2"
+                [(ngModel)]="newAppointment.location" name="location">
+            </div>
+          </div>
+
+          <div class="modal-footer px-0 pb-0 pt-3 border-top mt-3">
+            <button type="button" class="btn btn-light" (click)="closeAppointmentModal()">Cancelar</button>
+            <button type="submit" class="btn btn-primary px-4 shadow-sm">
+              <i class="fas fa-calendar-check mr-1"></i> Programar Cita
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+</div>
