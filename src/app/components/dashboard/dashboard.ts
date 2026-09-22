@@ -1,6 +1,7 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TareaService } from '../../service/tarea';
 
 export interface Contact {
   id: number;
@@ -16,7 +17,7 @@ export interface Contact {
   lastContact: string;
 }
 
-export interface Appointment {
+export interface Tareas {
   id: number;
   title: string;
   contactName: string;
@@ -26,6 +27,15 @@ export interface Appointment {
   type: 'Videollamada' | 'Presencial' | 'Llamada';
   status: 'Confirmada' | 'En curso' | 'Pendiente' | 'Completada';
   location: string;
+}
+
+export interface TareasObj {
+  id: null | number;
+  estado: string;
+  evento: string;
+  fecha: string;
+  lugar: string;
+  tipo: string;
 }
 
 export interface Task {
@@ -81,7 +91,7 @@ export class DashboardComponent {
 
   // Modals state
   showContactModal = signal(false);
-  showAppointmentModal = signal(false);
+  showTareasModal = signal(false);
   toastMessage = signal<string | null>(null);
 
   // New Contact Form Model
@@ -94,13 +104,13 @@ export class DashboardComponent {
     category: 'Cliente' as Contact['category']
   };
 
-  // New Appointment Form Model
-  newAppointment = {
+  // New Tareas Form Model
+  newTareas = {
     title: '',
     contactName: '',
     date: new Date().toISOString().substring(0, 10),
     time: '10:00',
-    type: 'Videollamada' as Appointment['type'],
+    type: 'Videollamada' as Tareas['type'],
     location: 'Google Meet'
   };
 
@@ -256,8 +266,8 @@ export class DashboardComponent {
     }
   ]);
 
-  // Appointments / Agenda
-  appointments = signal<Appointment[]>([
+  // Tareass / Agenda
+  Tareass = signal<Tareas[]>([
     {
       id: 1,
       title: 'Revisión Estratégica Q4',
@@ -432,12 +442,12 @@ export class DashboardComponent {
     this.resetContactForm();
   }
 
-  openAppointmentModal() {
-    this.showAppointmentModal.set(true);
+  openTareasModal() {
+    this.showTareasModal.set(true);
   }
 
-  closeAppointmentModal() {
-    this.showAppointmentModal.set(false);
+  closeTareasModal() {
+    this.showTareasModal.set(false);
   }
 
   saveContact() {
@@ -472,26 +482,37 @@ export class DashboardComponent {
     this.showToast(`Contacto "${created.name}" guardado exitosamente`);
   }
 
-  saveAppointment() {
-    if (!this.newAppointment.title.trim() || !this.newAppointment.contactName.trim()) {
+  saveTareas() {
+    if (!this.newTareas.title.trim() || !this.newTareas.contactName.trim()) {
+
       alert('Por favor completa el título y el nombre del contacto.');
       return;
     }
 
-    const created: Appointment = {
+    const created: Tareas = {
       id: Date.now(),
-      title: this.newAppointment.title,
-      contactName: this.newAppointment.contactName,
-      contactAvatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(this.newAppointment.contactName)}&background=0284c7&color=fff`,
-      time: this.newAppointment.time,
-      date: this.newAppointment.date,
-      type: this.newAppointment.type,
+      title: this.newTareas.title,
+      contactName: this.newTareas.contactName,
+      contactAvatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(this.newTareas.contactName)}&background=0284c7&color=fff`,
+      time: this.newTareas.time,
+      date: this.newTareas.date,
+      type: this.newTareas.type,
       status: 'Confirmada',
-      location: this.newAppointment.location
+      location: this.newTareas.location
     };
 
-    this.appointments.update(list => [created, ...list]);
-    this.closeAppointmentModal();
+    const tareaNew: TareasObj = {
+      id: null,
+      estado: "S",
+      evento: this.newTareas.title,
+      fecha: this.newTareas.date + " " + this.newTareas.time,
+      lugar: this.newTareas.location,
+      tipo: this.newTareas.type
+    };
+    console.log(tareaNew);
+    //this.Tareass.update(list => [created, ...list]);
+    this.agregarTarea(tareaNew);
+    this.closeTareasModal();
     this.showToast(`Cita "${created.title}" programada exitosamente`);
   }
 
@@ -519,7 +540,7 @@ export class DashboardComponent {
   }
 
 
-  jsonData: any[] = [];
+
 
   onFileSelected(event: any): void {
     const file: File = event.target.files[0];
@@ -533,53 +554,74 @@ export class DashboardComponent {
 
         // Aquí puedes procesar o parsear el texto del CSV
         this.parseCsvData(csvContent);
-        this.jsonData = this.convertCsvToJson(csvContent);
-        console.log('JSON Result:', this.jsonData);
+        this.showToast('Contacto eliminado');
       };
 
       reader.readAsText(file);
     }
   }
 
+  result: any[] = [];
   parseCsvData(content: string): void {
     // Separar por saltos de línea para obtener las filas
-    const lines = content.split('\n');
-    const result = [];
+    this.result = content.split('\n');
+    //const result = [];
 
     // Ejemplo básico para recorrer las líneas
+    /*
     for (let line of lines) {
       if (line.trim()) {
-        const row = line.split(';');
-        result.push(row);
+        const row = line.split(',');
+        this.result.push(row);
       }
-    }
+    }*/
 
-    console.log('Filas procesadas:', result);
-    for (let a of result) {
+    console.log('Filas procesadas:', this.result);
+
+    for (let a of this.result) {
       console.log(a);
     }
 
   }
-  convertCsvToJson(csvText: string): any[] {
-    const lines = csvText.split('\n');
-    const result = [];
 
-    // Extraer las cabeceras (primera línea) y limpiar espacios o retornos de carro
-    const headers = lines[0].split(',').map(header => header.trim());
 
-    for (let i = 1; i < lines.length; i++) {
-      if (!lines[i].trim()) continue; // Ignorar líneas vacías
 
-      const obj: any = {};
-      const currentline = lines[i].split(',');
+  private tareaService = inject(TareaService);
 
-      for (let j = 0; j < headers.length; j++) {
-        obj[headers[j]] = currentline[j] ? currentline[j].trim() : '';
+  agregarTarea(tarea: TareasObj) {
+    this.tareaService.add(tarea).subscribe({
+      next: (tarea) => {
+        console.log(tarea);
+      },
+      error: (err) => {
+        console.log(err);
       }
-
-      result.push(obj);
-    }
-
-    return result;
+    });
   }
+
+  /*
+    cargarTareas() {
+      this.tareaService.getAll().subscribe({
+        next: (tareas) => {
+          this.tareas = tareas;
+        },
+        error: (err) => {
+          console.log(err);
+        }
+      });
+    }
+  
+    cargarTarea(id: number) {
+      this.tareaService.getById(id).subscribe({
+        next: (tarea) => {
+          console.log(tarea);
+        },
+        error: (err) => {
+          console.log(err);
+        }
+      });
+    }
+  
+  */
+
 }
