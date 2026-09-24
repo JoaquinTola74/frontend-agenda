@@ -22,4 +22,7 @@ export class TareaService {
     add(tarea: TareasObj): Observable<TareasObj> {
         return this.http.post<TareasObj>(this.urlBase, tarea);
     }
+    delete(id: number): Observable<TareasObj> {
+        return this.http.delete<TareasObj>(`${this.urlBase}/${id}`);
+    }
 }

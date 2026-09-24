@@ -2,6 +2,8 @@ import { Component, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TareaService } from '../../service/tarea';
+import { Persona } from '../../models/Persona';
+import { PersonaService } from '../../service/persona';
 
 export interface Contact {
   id: number;
@@ -24,13 +26,13 @@ export interface Tareas {
   contactAvatar?: string;
   time: string;
   date: string;
-  type: 'Videollamada' | 'Presencial' | 'Llamada';
-  status: 'Confirmada' | 'En curso' | 'Pendiente' | 'Completada';
+  type: string;//'Videollamada' | 'Presencial' | 'Llamada';
+  status: string;//  'Confirmada' | 'En curso' | 'Pendiente' | 'Completada';
   location: string;
 }
 
 export interface TareasObj {
-  id: null | number;
+  id?: number;
   estado: string;
   evento: string;
   fecha: string;
@@ -73,6 +75,13 @@ export interface SystemNotification {
   styleUrl: './dashboard.css'
 })
 export class DashboardComponent {
+
+
+  constructor() {
+    this.getTareas();
+    this.getPersonas();
+  }
+
   // Sidebar State
   sidebarCollapsed = signal(false);
 
@@ -91,6 +100,7 @@ export class DashboardComponent {
 
   // Modals state
   showContactModal = signal(false);
+  showMensajeModal = signal(false);
   showTareasModal = signal(false);
   toastMessage = signal<string | null>(null);
 
@@ -109,7 +119,7 @@ export class DashboardComponent {
     title: '',
     contactName: '',
     date: new Date().toISOString().substring(0, 10),
-    time: '10:00',
+    time: '10:00:00',
     type: 'Videollamada' as Tareas['type'],
     location: 'Google Meet'
   };
@@ -267,7 +277,10 @@ export class DashboardComponent {
   ]);
 
   // Tareass / Agenda
-  Tareass = signal<Tareas[]>([
+
+
+  Tareass = signal<TareasObj[]>([
+    /*
     {
       id: 1,
       title: 'Revisión Estratégica Q4',
@@ -311,8 +324,9 @@ export class DashboardComponent {
       type: 'Llamada',
       status: 'Pendiente',
       location: 'Llamada Directa'
-    }
+    }*/
   ]);
+  Personas = signal<Persona[]>([]);
 
   // Tasks Data
   tasks = signal<Task[]>([
@@ -442,6 +456,7 @@ export class DashboardComponent {
     this.resetContactForm();
   }
 
+
   openTareasModal() {
     this.showTareasModal.set(true);
   }
@@ -502,10 +517,9 @@ export class DashboardComponent {
     };
 
     const tareaNew: TareasObj = {
-      id: null,
       estado: "S",
       evento: this.newTareas.title,
-      fecha: this.newTareas.date + " " + this.newTareas.time,
+      fecha: this.newTareas.date + " " + this.newTareas.time + ':00',
       lugar: this.newTareas.location,
       tipo: this.newTareas.type
     };
@@ -554,39 +568,46 @@ export class DashboardComponent {
 
         // Aquí puedes procesar o parsear el texto del CSV
         this.parseCsvData(csvContent);
-        this.showToast('Contacto eliminado');
+        //this.showToast('Contacto eliminado');
       };
 
       reader.readAsText(file);
     }
   }
 
-  result: any[] = [];
+
   parseCsvData(content: string): void {
     // Separar por saltos de línea para obtener las filas
-    this.result = content.split('\n');
+    const lines = content.split('\n');
+    lines.shift();
     //const result = [];
 
     // Ejemplo básico para recorrer las líneas
-    /*
+
     for (let line of lines) {
       if (line.trim()) {
-        const row = line.split(',');
-        this.result.push(row);
+        line = line.replaceAll("\"", "");
+        const row = line.split(';');
+
+        const tareaNew: TareasObj = {
+          estado: row[3],
+          evento: row[1],
+          fecha: row[4],
+          lugar: row[2],
+          tipo: row[1]
+        };
+        console.log(tareaNew);
+        this.agregarTarea(tareaNew);
+        //this.result.push(row);
       }
-    }*/
-
-    console.log('Filas procesadas:', this.result);
-
-    for (let a of this.result) {
-      console.log(a);
     }
-
   }
 
 
 
+
   private tareaService = inject(TareaService);
+  private personaService = inject(PersonaService);
 
   agregarTarea(tarea: TareasObj) {
     this.tareaService.add(tarea).subscribe({
@@ -598,30 +619,99 @@ export class DashboardComponent {
       }
     });
   }
+  getTareas() {
+    this.tareaService.getAll().subscribe({
+      next: (datos) => {
+
+        this.Tareass.set(datos);
+        //console.log(this.Tareass);
+        //this.Tareass.set(datos);
+      },
+      error: (err) => {
+        console.log(err);
+        this.showToast('Error al obtener tareas');
+      }
+    });
+  }
+  cargarTarea(id: number) {
+    this.tareaService.getById(id).subscribe({
+      next: (tarea) => {
+        console.log(tarea);
+      },
+      error: (err) => {
+        console.log(err);
+      }
+    });
+  }
+  borrarTarea(id: number) {
+    this.tareaService.delete(id).subscribe({
+      next: (tarea) => {
+        console.log(tarea);
+        this.showToast('Tarea eliminada correctamente');
+        this.getTareas();
+      },
+      error: (err) => {
+        console.log(err);
+        this.showToast('Error al eliminar tarea');
+      }
+    });
+  }
+
+
+  getPersonas() {
+    this.personaService.getAll().subscribe({
+      next: (datos) => {
+        this.Personas.set(datos);
+        //console.log(this.Personas);
+        //alert(this.Personas);
+        //this.Tareass.set(datos);
+      },
+      error: (err) => {
+        console.log(err);
+        this.showToast('Error al obtener personas');
+      }
+    });
+  }
+
 
   /*
-    cargarTareas() {
-      this.tareaService.getAll().subscribe({
-        next: (tareas) => {
-          this.tareas = tareas;
-        },
-        error: (err) => {
-          console.log(err);
-        }
-      });
+private idElementoAEliminar: number | null = null;
+abrirModal(contenido: any, id: number) {
+    this.idElementoAEliminar = id;
+    this.modalService.open(contenido, { centered: true });
+  }
+
+  // Se ejecuta al hacer clic en "Eliminar"
+  confirmarBorrado() {
+    if (this.idElementoAEliminar !== null) {
+      // Llama a tu servicio para borrar en el backend o lista local
+      console.log(`Eliminando el elemento con ID: ${this.idElementoAEliminar}`);
+      
+      // Cierra el modal actual
+      this.modalService.dismissAll();
     }
-  
-    cargarTarea(id: number) {
-      this.tareaService.getById(id).subscribe({
-        next: (tarea) => {
-          console.log(tarea);
-        },
-        error: (err) => {
-          console.log(err);
-        }
-      });
-    }
-  
+  }
   */
 
+  idDelete: number = 0;
+  openMensajeModal(id: any) {
+    this.idDelete = id;
+    this.showMensajeModal.set(true);
+  }
+
+  closeMensajeModal() {
+    this.showMensajeModal.set(false);
+    this.idDelete = 0;
+    //this.resetContactForm();
+  }
+  deleteTarea() {
+    //this.contacts.update(list => list.filter(c => c.id !== id));
+    this.showToast('Tarea eliminado');
+  }
+  confirmarBorrado() {
+    this.borrarTarea(this.idDelete);
+    this.closeMensajeModal();
+
+    this.idDelete = 0;
+  }
 }

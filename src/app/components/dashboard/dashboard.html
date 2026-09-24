@@ -151,6 +151,8 @@
           <button class="btn btn-outline-primary btn-sm px-3 shadow-sm" (click)="openTareasModal()">
             <i class="fas fa-plus-circle mr-1"></i> Nueva Cita
           </button>
+          <input type="file" (change)="onFileSelected($event)" accept=".csv"
+            class="btn btn-outline-primary btn-sm px-3 shadow-sm">
         </div>
 
         <!-- Date Badge -->
@@ -307,67 +309,64 @@
               <table class="table table-hover align-middle mb-0 custom-dashboard-table">
                 <thead class="thead-light">
                   <tr>
-                    <th class="border-0 px-4">Contacto / Persona</th>
+                    <th class="border-0 px-4">Nombre</th>
 
-                    <th class="border-0">Empresa & Cargo</th>
-                    <th class="border-0">Canal Directo</th>
-                    <th class="border-0">Categoría</th>
+                    <th class="border-0">Cedula de Identidad</th>
+                    <th class="border-0">Celular</th>
+                    <th class="border-0">Unidad Cañera</th>
                     <th class="border-0">Estado</th>
                     <th class="border-0 text-right px-4">Acciones</th>
 
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let res of result ">
-                    <td class="px-4 d-flex align-items-center">{{ res }}</td>
-                  </tr>
 
-                  <tr *ngFor="let contact of filteredContacts()">
+                  <tr *ngFor="let persona of Personas()">
                     <td class="px-4">
                       <div class="d-flex align-items-center">
-                        <img [src]="contact.avatar" alt="Avatar" class="avatar-table rounded-circle mr-3 shadow-xs">
+                        <img [src]="persona.id" alt="Avatar" class="avatar-table rounded-circle mr-3 shadow-xs">
                         <div>
-                          <span class="font-weight-bold text-navy d-block">{{ contact.name }}</span>
-                          <small class="text-muted">{{ contact.email }}</small>
+                          <span class="font-weight-bold text-navy d-block">{{ persona.nombre }}</span>
+                          <small class="text-muted">{{ persona.ap_paterno }} {{ persona.ap_materno }}</small>
                         </div>
                       </div>
                     </td>
                     <td>
-                      <span class="d-block font-weight-500 text-dark">{{ contact.company }}</span>
-                      <small class="text-muted">{{ contact.role }}</small>
+                      <span class="d-block font-weight-500 text-dark">{{ persona.ci }}</span>
+                      <small class="text-muted">Cañero:{{ persona.cod_uni_canero }}</small>
                     </td>
                     <td>
-                      <span class="d-block text-dark small font-weight-500">{{ contact.phone }}</span>
-                      <small class="text-muted"><i class="far fa-clock mr-1"></i>{{ contact.lastContact }}</small>
+                      <span class="d-block text-dark small font-weight-500">{{ persona.celular }}</span>
+                      <small class="text-muted"><i class="far fa-clock mr-1"></i>{{ persona.celular }}</small>
                     </td>
                     <td>
                       <span class="badge" [ngClass]="{
-                        'badge-vip': contact.category === 'VIP',
-                        'badge-client': contact.category === 'Cliente',
-                        'badge-team': contact.category === 'Equipo',
-                        'badge-provider': contact.category === 'Proveedor'
+                        'badge-vip': persona.estado  === 'VIP',
+                        'badge-client': persona.estado === 'Cliente',
+                        'badge-team': persona.estado === 'Equipo',
+                        'badge-provider': persona.estado === 'Proveedor'
                       }">
-                        {{ contact.category }}
+                        {{ persona.estado }}
                       </span>
                     </td>
                     <td>
-                      <span class="badge-status-pill" [class.badge-status-active]="contact.status === 'Activo'"
-                        [class.badge-status-pending]="contact.status === 'Pendiente'">
-                        <span class="status-indicator"></span> {{ contact.status }}
+                      <span class="badge-status-pill" [class.badge-status-active]="persona.estado === 'Activo'"
+                        [class.badge-status-pending]="persona.estado === 'Pendiente'">
+                        <span class="status-indicator"></span> {{ persona.estado }}
                       </span>
                     </td>
                     <td class="text-right px-4">
                       <div class="btn-group btn-group-sm">
                         <button class="btn btn-light text-primary btn-action" title="Llamar"
-                          (click)="showToast('Iniciando llamada a ' + contact.name)">
-                          <i class="fas fa-phone-alt"></i>
+                          (click)="showToast('Iniciando llamada a ' + persona.nombre)">
+                          <i class="fas fa-eye"></i>
                         </button>
                         <button class="btn btn-light text-info btn-action" title="Enviar Email"
-                          (click)="showToast('Abriendo cliente de correo para ' + contact.email)">
-                          <i class="far fa-envelope"></i>
+                          (click)="showToast('Abriendo cliente de correo para ' + persona.celular)">
+                          <i class="fas fa-edit"></i>
                         </button>
                         <button class="btn btn-light text-danger btn-action" title="Eliminar"
-                          (click)="deleteContact(contact.id)">
+                          (click)="deleteContact(persona.expedido)">
                           <i class="far fa-trash-alt"></i>
                         </button>
                       </div>
@@ -499,35 +498,40 @@
               <div class="timeline-container position-relative">
                 <div *ngFor="let apt of Tareass()" class="timeline-item pb-3 position-relative">
                   <div class="timeline-badge" [ngClass]="{
-                    'bg-primary': apt.status === 'En curso',
-                    'bg-info': apt.status === 'Confirmada',
-                    'bg-secondary': apt.status === 'Pendiente'
+                    'bg-primary': apt.estado === 'S',
+                    'bg-info': apt.estado === 'Confirmada',
+                    'bg-secondary': apt.estado === 'Pendiente'
                   }"></div>
                   <div class="timeline-card p-3 rounded bg-light-blue-subtle border-left-blue">
                     <div class="d-flex justify-content-between align-items-start mb-1">
                       <span class="timeline-time font-weight-bold text-primary small">
-                        <i class="far fa-clock mr-1"></i> {{ apt.time }}
+                        <i class="far fa-clock mr-1"></i> {{ apt.fecha }}
                       </span>
                       <span class="badge" [ngClass]="{
-                        'badge-primary': apt.status === 'En curso',
-                        'badge-info': apt.status === 'Confirmada',
-                        'badge-warning': apt.status === 'Pendiente'
+                        'badge-primary': apt.estado === 'S',
+                        'badge-info': apt.estado === 'Confirmada',
+                        'badge-warning': apt.estado === 'Pendiente'
                       }">
-                        {{ apt.status }}
+                        {{ apt.id }}
                       </span>
+                      <button class="btn btn-light text-danger btn-action" title="Eliminar"
+                        (click)="openMensajeModal(apt.id)">
+                        <i class="far fa-trash-alt"></i>
+                      </button>
                     </div>
-                    <h6 class="font-weight-bold text-navy mb-1">{{ apt.title }}</h6>
+                    <h6 class="font-weight-bold text-navy mb-1">{{ apt.evento }}</h6>
+
                     <div class="d-flex align-items-center justify-content-between mt-2">
                       <div class="d-flex align-items-center">
-                        <img [src]="apt.contactAvatar" alt="Avatar" class="avatar-xs rounded-circle mr-2">
-                        <small class="font-weight-500 text-dark">{{ apt.contactName }}</small>
+                        <img [src]="" alt="Avatar" class="avatar-xs rounded-circle mr-2">
+                        <small class="font-weight-500 text-dark">{{ apt.tipo }}</small>
                       </div>
                       <small class="text-muted font-weight-500">
                         <i class="fas" [ngClass]="{
-                          'fa-video text-primary': apt.type === 'Videollamada',
-                          'fa-map-marker-alt text-danger': apt.type === 'Presencial',
-                          'fa-phone text-success': apt.type === 'Llamada'
-                        }"></i> {{ apt.location }}
+                          'fa-video text-primary': apt.tipo === 'Videollamada',
+                          'fa-map-marker-alt text-danger': apt.tipo === 'Presencial',
+                          'fa-phone text-success': apt.tipo === 'Llamada'
+                        }"></i> {{ apt.lugar }}
                       </small>
                     </div>
                   </div>
@@ -692,7 +696,7 @@
           <div class="form-row">
             <div class="form-group col-md-6">
               <label class="font-weight-bold small text-navy">Teléfono / WhatsApp</label>
-              <input type="text" class="form-control" placeholder="+34 600 000 000" [(ngModel)]="newContact.phone"
+              <input type="text" class="form-control" placeholder="+591 70000000" [(ngModel)]="newContact.phone"
                 name="phone">
             </div>
             <div class="form-group col-md-6">
@@ -801,4 +805,59 @@
     </div>
   </div>
 
+</div>
+
+
+<!--
+<button class="btn btn-danger" (click)="abrirModal(modalConfirmacion, elemento.id)">
+  Borrar
+</button>
+-->
+<!-- Estructura del Modal de Bootstrap -->
+
+<!--
+<ng-template #modalConfirmacion let-modal>
+  <div class="modal-header">
+    <h4 class="modal-title">Confirmar eliminación</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    <p>¿Estás seguro de que deseas borrar este elemento?</p>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Cancelar</button>
+    <button type="button" class="btn btn-danger" (click)="confirmarBorrado()">Eliminar</button>
+  </div>
+</ng-template>
+-->
+
+
+<div *ngIf="showMensajeModal()" class="custom-modal-backdrop d-flex align-items-center justify-content-center">
+  <div class="custom-modal bg-white rounded-lg shadow-lg">
+    <div class="modal-header bg-navy text-white px-4 py-3 rounded-top">
+      <div class="d-flex align-items-center">
+        <div class="modal-header-icon bg-royal text-white rounded-circle p-2 mr-3">
+          <i class="fas fa-user-plus"></i>
+        </div>
+        <div>
+          <h5 class="modal-title font-weight-bold text-white mb-0">Desea Eliminar esta Tarea?</h5>
+          <small class="text-blue-light">Esta acción no se puede deshacer: {{ idDelete }}</small>
+        </div>
+      </div>
+      <button type="button" class="close text-white" (click)="closeMensajeModal()">
+        <span>&times;</span>
+      </button>
+    </div>
+
+    <div class="modal-body p-4">
+      <form (ngSubmit)="confirmarBorrado()">
+        <div class="modal-footer px-0 pb-0 pt-3 border-top mt-3">
+          <button type="button" class="btn btn-light" (click)="closeMensajeModal()">Cancelar</button>
+          <button type="submit" class="btn btn-danger px-4 shadow-sm">
+            <i class="fas fa-trash-alt mr-1"></i> Borrar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
